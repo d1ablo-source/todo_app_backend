@@ -4,26 +4,12 @@ from fastapi import Depends, FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from uuid import uuid4
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker, DeclarativeBase
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from src.models.base import Base
+from src.db.session import engine
 
-DATABASE_URL = "postgresql+psycopg://postgres:admin@127.0.0.1:5432/postgres"
-engine = create_engine(DATABASE_URL)
-Sessionlocal = sessionmaker(bind=engine)
-
-class Base(DeclarativeBase):
-    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid4()))
-
-
-class TaskORM(Base):
-    __tablename__ = "tasks"
-    title: Mapped[str]
-    completed: Mapped[bool] = mapped_column(default=False)
-
-class CategoryORM(Base):
-    __tablename__ = "categories"
-    name: Mapped[str]
 
 
 @asynccontextmanager
@@ -45,28 +31,6 @@ app.add_middleware(
 
 
 
-class TaskSchema(BaseModel):
-    id: str
-    title: str
-    completed: bool
-
-
-class Task_Create(BaseModel):
-    title: str
-
-
-class TaskUpdate(BaseModel):
-    title: str | None = None
-    completed: bool | None = None
-
-
-
-def get_db():
-    db = Sessionlocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def task_orm_to_model(task_orm: TaskORM) -> TaskSchema:
     return TaskSchema(id=task_orm.id, title=task_orm.title, completed=task_orm.completed)
@@ -104,12 +68,7 @@ def delete_task(task_id, db: Session = Depends(get_db)) -> None:
     db.delete(task_for_delete)
     db.commit()
 
-class CategorySchema(BaseModel):
-    id: str | None = None
-    name: str | None = None
 
-class Create_and_Update_Category(BaseModel):
-    name: str
 
  
 @app.get("/categories")
