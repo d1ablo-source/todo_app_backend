@@ -146,3 +146,4 @@ def delete_category(id: str, db: Session = Depends(get_db)) -> None:
     
     db.delete(category_for_delete)
     db.commit()
+# Тестовый комментарий для Pull Request
